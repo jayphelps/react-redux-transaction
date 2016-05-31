@@ -1,19 +1,25 @@
 {
   "name": "react-redux-transaction",
-  "version": "0.0.3",
+  "version": "0.0.5",
   "description": "React helpers for redux-transaction, e.g. load model on props change and automatically cancel on unmount",
   "license": "MIT",
   "main": "lib/index.js",
   "scripts": {
+    "clean": "rimraf ./lib",
+    "test": "BABEL_ENV=commonjs mocha --compilers js:babel-core/register --reporter spec test/*-spec.js",
+    "posttest": "npm run lint",
     "lint": "eslint src && eslint test",
-    "build": "npm run lint && rm -rf lib && babel src -d lib",
-    "build_tests": "rm -rf temp && babel test -d temp",
-    "clean": "rimraf ./lib; rimraf ./temp;",
-    "test": "npm run build && npm run build_tests && mocha temp",
-    "prepublish": "npm test"
+    "build": "npm run lint && npm run build:commonjs && npm run build:umd && npm run build:umd:min && npm run build:es",
+    "build:commonjs": "BABEL_ENV=commonjs babel src --out-dir lib",
+    "build:es": "BABEL_ENV=es babel src --out-dir es",
+    "build:umd": "BABEL_ENV=commonjs NODE_ENV=development webpack",
+    "build:umd:min": "BABEL_ENV=commonjs NODE_ENV=production webpack",
+    "prepublish": "npm run clean && npm run test && npm run build"
   },
   "files": [
     "lib",
+    "dist",
+    "es",
     "README.md",
     "LICENSE"
   ],
@@ -53,7 +59,10 @@
   },
   "devDependencies": {
     "babel-cli": "^6.7.5",
+    "babel-core": "^6.7.5",
     "babel-eslint": "^6.0.3",
+    "babel-loader": "^6.2.4",
+    "babel-plugin-transform-es2015-modules-commonjs": "^6.7.4",
     "babel-plugin-transform-class-properties": "6.9.1",
     "babel-plugin-transform-decorators-legacy": "1.3.4",
     "babel-plugin-transform-export-extensions": "6.8.0",
@@ -72,6 +81,7 @@
     "react-redux": "4.*",
     "redux": "^3.5.1",
     "redux-transaction": "0.*",
-    "rimraf": "^2.5.2"
+    "rimraf": "^2.5.2",
+    "webpack": "^1.12.14"
   }
 }
