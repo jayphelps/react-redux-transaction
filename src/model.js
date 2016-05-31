@@ -75,7 +75,7 @@ const model = hooks =>
         store: PropTypes.object.isRequired
       };
 
-      update(nextProps) {
+      cancelPendingAction() {
         const { getState, dispatch } = this.context.store;
 
         if (this.action) {
@@ -86,7 +86,12 @@ const model = hooks =>
             dispatch(cancel(this.action));
           }
         }
+      }
 
+      update(nextProps) {
+        const { dispatch } = this.context.store;
+
+        this.cancelPendingAction();
         const action = hooks.mapActionPropsToAction(nextProps);
         // the action might be async (e.g. thunk) so we need to capture the
         // result of dispatch to get the *real* action
@@ -102,7 +107,7 @@ const model = hooks =>
       }
 
       componentWillUnmount() {
-
+        this.cancelPendingAction();
       }
 
       render() {
