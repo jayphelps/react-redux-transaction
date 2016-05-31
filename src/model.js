@@ -87,8 +87,10 @@ const model = hooks =>
           }
         }
 
-        this.action = hooks.mapActionPropsToAction(nextProps);
-        dispatch(this.action);
+        const action = hooks.mapActionPropsToAction(nextProps);
+        // the action might be async (e.g. thunk) so we need to capture the
+        // result of dispatch to get the *real* action
+        this.action = dispatch(action);
       }
 
       componentWillMount() {
