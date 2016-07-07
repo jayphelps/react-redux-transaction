@@ -44,7 +44,6 @@ const model = hooks =>
       };
 
       render() {
-        console.log('Transaction#render()', this.props);
         // This will intentionally exclude retry/action
         const { retry, action, ...props } = this.props; //eslint-disable-line no-unused-vars
         return (
@@ -102,7 +101,6 @@ const model = hooks =>
       }
 
       render() {
-        console.log('Action#render()', this.props);
         return (
           <Transaction {...this.props} action={this.state.action} retry={this.update} />
         );
