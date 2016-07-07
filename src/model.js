@@ -6,25 +6,6 @@ const getDisplayName = Component => (
   Component.displayName || Component.name || 'Component'
 );
 
-const typeCheckError = (propName, componentName) => {
-  return new Error(`Required prop \`${propName}\` was not specified in \`${componentName}\``);
-};
-
-const transactionsTypeCheck = (isRequired, props, propName, componentName) => {
-  const transactions = props[propName];
-  const error = typeCheckError.bind(null, propName, componentName);
-
-  for (const key in transactions) {
-    if (!key.match(/[0-9]+/)) {
-      return error();
-    }
-    // TODO: the rest of the validation
-  }
-};
-
-export const transactionsShape = transactionsTypeCheck.bind(null, false);
-transactionsShape.isRequired = transactionsTypeCheck.bind(null, true);
-
 export const transactionMetaShape = PropTypes.shape({
   id: PropTypes.string.isRequired,
   type: PropTypes.oneOf([BEGIN, COMMIT, ROLLBACK]),
@@ -42,29 +23,32 @@ export const actionShape = PropTypes.shape({
 const model = hooks =>
   ComposedComponent => {
     const ConnectedComponent = connect(
-      hooks.mapStateToProps,
-      hooks.mapDispatchToProps
-    )(ComposedComponent);
+        hooks.mapStateToProps,
+        hooks.mapDispatchToProps,
+        hooks.mergeProps,
+        hooks.options
+      )(ComposedComponent);
 
-    @connect(({ transactions }) => ({ transactions }))
+    @connect(({ transactions }, { action, retry }) => ({
+      action,
+      transaction: transactions[getTransactionId(action)]
+    }))
     class Transaction extends Component {
       static contextTypes = {
         store: PropTypes.object.isRequired
       };
 
       static propTypes = {
-        transactions: transactionsShape.isRequired,
+        transaction: transactionMetaShape.isRequired,
         action: actionShape.isRequired
       };
 
       render() {
-        // This will intentionally exclude action/transactions
-        const { action, transactions, ...props } = this.props;
+        console.log('Transaction#render()', this.props);
+        // This will intentionally exclude retry/action
+        const { retry, action, ...props } = this.props; //eslint-disable-line no-unused-vars
         return (
-          <ConnectedComponent
-            {...props}
-            transaction={transactions[getTransactionId(action)]}
-          />
+          <ConnectedComponent {...props} />
         );
       }
     }
@@ -75,27 +59,34 @@ const model = hooks =>
         store: PropTypes.object.isRequired
       };
 
+      state = {
+        action: null
+      };
+
       cancelPendingAction() {
+        const { action } = this.state;
         const { getState, dispatch } = this.context.store;
 
-        if (this.action) {
+        if (action) {
           const { transactions } = getState();
-          const previousTransaction = transactions[getTransactionId(this.action)];
+          const previousTransaction = transactions[getTransactionId(action)];
 
           if (previousTransaction && previousTransaction.isPending) {
-            dispatch(cancel(this.action));
+            dispatch(cancel(action));
           }
         }
       }
 
-      update(nextProps) {
+      update = (nextProps) => {
         const { dispatch } = this.context.store;
 
         this.cancelPendingAction();
         const action = hooks.mapActionPropsToAction(nextProps);
         // the action might be async (e.g. thunk) so we need to capture the
         // result of dispatch to get the *real* action
-        this.action = dispatch(action);
+        this.setState({
+          action: dispatch(action) || action
+        });
       }
 
       componentWillMount() {
@@ -111,8 +102,9 @@ const model = hooks =>
       }
 
       render() {
+        console.log('Action#render()', this.props);
         return (
-          <Transaction {...this.props} action={this.action}/>
+          <Transaction {...this.props} action={this.state.action} retry={this.update} />
         );
       }
     }
