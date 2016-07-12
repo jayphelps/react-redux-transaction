@@ -32,7 +32,7 @@ const model = hooks =>
     @connect(({ transactions }, { action, retry }) => ({
       action,
       transaction: transactions[getTransactionId(action)]
-    }))
+    }), null, null, hooks.options)
     class Transaction extends Component {
       static contextTypes = {
         store: PropTypes.object.isRequired
@@ -52,7 +52,7 @@ const model = hooks =>
       }
     }
 
-    @connect(hooks.mapStateToActionProps)
+    @connect(hooks.mapStateToActionProps, null, null, hooks.options)
     class Action extends Component {
       static contextTypes = {
         store: PropTypes.object.isRequired

@@ -1,6 +1,6 @@
 {
   "name": "react-redux-transaction",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "React helpers for redux-transaction, e.g. load model on props change and automatically cancel on unmount",
   "license": "MIT",
   "main": "lib/index.js",
